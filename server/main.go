@@ -4,7 +4,7 @@ import (
 	"io"
 	"net/http"
 
-	disc9 "github.com/ykpythemind/9disc"
+	"github.com/ykpythemind/disc9"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"

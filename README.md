@@ -1,4 +1,4 @@
-# 9disc
+# disc9
 
 ```
 $ dep ensure
