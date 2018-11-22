@@ -36,3 +36,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/nfnt/resize"
+
+[[constraint]]
+  name = "github.com/labstack/echo"
+  version = "3.3.7"
