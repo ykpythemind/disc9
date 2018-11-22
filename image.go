@@ -43,15 +43,18 @@ func (c *Container) Bounds() image.Rectangle {
 	}
 }
 
+func (c *Container) ToJpeg(out io.Writer) error {
+	opts := &jpeg.Options{Quality: 100}
+	return jpeg.Encode(out, c, opts)
+}
+
 func (c *Container) SaveImage(fileName string) error {
 	out, err := os.Create(fileName)
 	if err != nil {
 		return err
 	}
 	defer out.Close()
-	opts := &jpeg.Options{Quality: 100}
-
-	return jpeg.Encode(out, c, opts)
+	return c.ToJpeg(out)
 }
 
 type Pos struct {
