@@ -48,7 +48,7 @@ func upload(c echo.Context) error {
 
 	container, err := disc9.NewContainer(readers[:], 500, 3, 3)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, err)
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, err.Error())
 	}
 
 	return container.ToJpeg(c.Response())
