@@ -23,29 +23,19 @@ func main() {
 }
 
 func upload(c echo.Context) error {
-	// Read form fields
-	// name := c.FormValue("name")
-	// email := c.FormValue("email")
-
-	//------------
-	// Read files
-	//------------
-
-	// Multipart form
 	form, err := c.MultipartForm()
 	if err != nil {
 		return err
 	}
 	files := form.File["files"]
 
+	if len(files) != 9 {
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, "9 files are required")
+	}
+
 	var readers [9]io.Reader
-	var count = 0
 
 	for i, file := range files {
-		count++
-		if count > 9 {
-			break
-		}
 		// Source
 		src, err := file.Open()
 		if err != nil {
@@ -56,14 +46,29 @@ func upload(c echo.Context) error {
 		readers[i] = src
 	}
 
-	if count != 9 {
-		return c.String(http.StatusUnprocessableEntity, "9 files are required")
-	}
-
-	con, err := disc9.NewContainer(readers[:], 500, 3, 3)
+	container, err := disc9.NewContainer(readers[:], 500, 3, 3)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, err)
 	}
 
-	return con.ToJpeg(c.Response())
+	return container.ToJpeg(c.Response())
+}
+
+type errorResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
+func customErrorHandler(err error, c echo.Context) {
+	code := http.StatusInternalServerError
+	if he, ok := err.(*echo.HTTPError); ok {
+		code = he.Code
+	}
+
+	e := errorResponse{
+		Code:    code,
+		Message: err.Error(),
+	}
+
+	c.JSON(code, e)
 }

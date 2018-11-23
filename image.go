@@ -2,6 +2,7 @@ package disc9
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"io"
 	"os"
@@ -11,22 +12,20 @@ import (
 	"image/jpeg"
 	_ "image/png"
 
-	"github.com/google/uuid"
 	"github.com/nfnt/resize"
 )
 
 const maxDiscCount = 9
 
 type Container struct {
-	Discs    []Disc
+	Discs    []disc
 	DiscSize int
-	X        int
-	Y        int
+	XCount   int
+	YCount   int
 }
 
-type Disc struct {
+type disc struct {
 	Image image.Image
-	UUID  string
 	size  int
 }
 
@@ -57,107 +56,96 @@ func (c *Container) SaveImage(fileName string) error {
 	return c.ToJpeg(out)
 }
 
-type Pos struct {
-	index int
-	x     int
-	y     int
+type position struct {
+	x int
+	y int
+}
+
+func (p *position) String() string {
+	return fmt.Sprintf("x = %+v, y = %+v", p.x, p.y)
+}
+
+var posMap = [][]int{
+	[]int{0, 1, 2},
+	[]int{3, 4, 5},
+	[]int{6, 7, 8},
+}
+
+func (p *position) index() int {
+	return posMap[p.y][p.x]
 }
 
 func (c *Container) At(x, y int) color.Color {
-	pos := detectIndexOfDisc(x, y, c.RectSize(), c.X, c.Y)
-	disc := c.Discs[pos.index]
-	discPx := x - (pos.x * c.RectSize())
-	discPy := y - (pos.y * c.RectSize())
+	pos := c.detectPositionFromPoint(x, y)
+	disc := c.Discs[pos.index()]
+	discPx := x - (pos.x * c.rectSize())
+	discPy := y - (pos.y * c.rectSize())
 
 	return disc.Image.At(discPx, discPy)
 }
 
-func (c *Container) RectSize() int {
-	return c.DiscSize / c.X
+func (c *Container) rectSize() int {
+	return c.DiscSize / c.XCount
 }
 
-func detectIndexOfDisc(px, py, rectSize, xDisc, yDisc int) Pos {
+func (c *Container) detectPositionFromPoint(px, py int) position {
+	xDisc := c.XCount
+	yDisc := c.YCount
+	rectSize := c.rectSize()
+
 	for x := 0; x < xDisc; x++ {
 		for y := 0; y < yDisc; y++ {
 			if (x*rectSize) <= px && px < (x+1)*rectSize {
 				if (y*rectSize) <= py && py < (y+1)*rectSize {
-					return Pos{detect(x, y), x, y} // FIXME
+					return position{x, y}
 				}
 			}
 		}
 	}
-	return Pos{0, 0, 0}
+	return position{0, 0}
 }
 
-func detect(x, y int) int {
-	// FIXME
-	if x == 0 {
-		switch y {
-		case 0:
-			return 0
-		case 1:
-			return 3
-		case 2:
-			return 6
-		}
-	}
-	if x == 1 {
-		switch y {
-		case 0:
-			return 1
-		case 1:
-			return 4
-		case 2:
-			return 7
-		}
-	}
-	switch y {
-	case 0:
-		return 2
-	case 1:
-		return 5
-	}
-	return 8
-}
-
-func NewContainer(rs []io.Reader, size, x, y int) (*Container, error) {
-	if len(rs) != maxDiscCount {
+// NewContainer is constructor of Container
+//  size: output square size(px)
+//  x   : x disc count
+//  y   : y disc count
+func NewContainer(readers []io.Reader, size, x, y int) (*Container, error) {
+	if len(readers) != maxDiscCount {
 		return nil, errors.New("io Must have 9")
 	}
 
-	discs := make([]Disc, 9)
-	for i, r := range rs {
-		d, err := NewDisc(r, size/x)
+	discs := make([]disc, maxDiscCount)
+	for i, r := range readers {
+		d, err := newDisc(r, size/x)
 		if err != nil {
 			return nil, err
 		}
-		d.Resize()
+		d.resize() // Resize each disc size here
 		discs[i] = *d
 	}
 
 	container := &Container{
 		Discs:    discs,
 		DiscSize: size,
-		X:        x,
-		Y:        y,
+		XCount:   x,
+		YCount:   y,
 	}
 	return container, nil
 }
 
-func (d *Disc) Resize() {
+func (d *disc) resize() {
 	w := uint(d.size)
 	d.Image = resize.Resize(w, w, d.Image, resize.Lanczos3)
 }
 
-func NewDisc(r io.Reader, size int) (*Disc, error) {
+func newDisc(r io.Reader, size int) (*disc, error) {
 	img, _, err := image.Decode(r)
 	if err != nil {
 		return nil, err
 	}
 
-	disc := &Disc{
+	disc := &disc{
 		Image: img,
-		UUID:  uuid.New().String(),
 		size:  size,
 	}
 
