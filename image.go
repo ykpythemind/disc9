@@ -6,6 +6,7 @@ import (
 	"image"
 	"io"
 	"os"
+	"sync"
 
 	"image/color"
 	_ "image/gif"
@@ -18,7 +19,7 @@ import (
 const maxDiscCount = 9
 
 type Container struct {
-	Discs    []disc
+	Discs    []*disc
 	DiscSize int
 	XCount   int
 	YCount   int
@@ -116,15 +117,22 @@ func NewContainer(readers []io.Reader, size int) (*Container, error) {
 		return nil, errors.New("io Must have 9")
 	}
 
-	discs := make([]disc, maxDiscCount)
+	discs := make([]*disc, maxDiscCount)
+
+	wg := sync.WaitGroup{}
 	for i, r := range readers {
 		d, err := newDisc(r, size/x)
 		if err != nil {
 			return nil, err
 		}
-		d.resize() // Resize each disc size here
-		discs[i] = *d
+		wg.Add(1)
+		go func() {
+			d.resize() // Resize each disc size here
+			wg.Done()
+		}()
+		discs[i] = d
 	}
+	wg.Wait()
 
 	container := &Container{
 		Discs:    discs,
