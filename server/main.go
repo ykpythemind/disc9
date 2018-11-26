@@ -46,7 +46,7 @@ func upload(c echo.Context) error {
 		readers[i] = src
 	}
 
-	container, err := disc9.NewContainer(readers[:], 500, 3, 3)
+	container, err := disc9.NewContainer(readers[:], 500)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnprocessableEntity, err.Error())
 	}

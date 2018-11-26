@@ -107,9 +107,11 @@ func (c *Container) detectPositionFromPoint(px, py int) position {
 
 // NewContainer is constructor of Container
 //  size: output square size(px)
-//  x   : x disc count
-//  y   : y disc count
-func NewContainer(readers []io.Reader, size, x, y int) (*Container, error) {
+func NewContainer(readers []io.Reader, size int) (*Container, error) {
+	// TODO: xとy方向の枚数を変更可能にする
+	x := 3
+	y := 3
+
 	if len(readers) != maxDiscCount {
 		return nil, errors.New("io Must have 9")
 	}
