@@ -2,15 +2,44 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>9枚</title>
-  <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://unpkg.com/normalize.css@8.0.1/normalize.css">
+  <style type="text/css">
+.container {
+  width: 100%;
+  max-width: 600px;
+
+  margin: 3rem auto;
+}
+ol {
+  display: flex; flex-direction: row; flex-wrap: wrap;
+  list-style-type: none;
+  margin: 0; padding: 0;
+}
+li {
+  width: 33%;
+}
+  </style>
+  <script src="/script.js"></script>
 </head>
 <body>
-<h1>9枚メーカー</h1>
+<div class="container">
+  <h1>9枚メーカー</h1>
+  <div class="main">
+    <form method="post" enctype="multipart/form-data">
+      <label for="image_uploads">画像を9つ選択してください (png, jpg)</label>
+      <input type="file" id="image_uploads" name="image_uploads" accept=".jpg, .jpeg, .png" multiple>
 
-<form action="/upload" method="post" enctype="multipart/form-data">
-  Files: <input type="file" name="files" multiple><br><br>
-  <input type="submit" value="Submit">
-</form>
+      <div class="preview">
+      </div>
+
+      <div class="status">
+      </div>
+
+      <a id="upload" href="#">送信</a>
+    </form>
+  </div>
+</div>
 </body>
 </html>
