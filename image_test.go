@@ -2,6 +2,7 @@ package disc9
 
 import (
 	"io"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"testing"
@@ -29,19 +30,48 @@ func TestPosition(t *testing.T) {
 	}
 }
 
-func TestSaveImage(t *testing.T) {
+func BenchmarkToJpeg(b *testing.B) {
+	readers, closes := prepareReaders()
+	defer closes()
+
+	con, err := NewContainer(readers[:], 500)
+	if err != nil {
+		panic(err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		err = con.ToJpeg(ioutil.Discard)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func prepareReaders() ([]io.Reader, func()) {
 	var readers [9]io.Reader
+	closes := [9]func() error{}
 	for i := range readers {
 		s := strconv.Itoa(i + 1)
 		r, err := os.Open("./testdata/" + s + ".jpg")
-		defer r.Close()
+		closes[i] = r.Close
 		if err != nil {
 			panic(err)
 		}
 		readers[i] = r
 	}
 
-	con, err := NewContainer(readers[:], 500, 3, 3)
+	return readers[:], func() {
+		for _, c := range closes {
+			c()
+		}
+	}
+}
+
+func TestSaveImage(t *testing.T) {
+	readers, closes := prepareReaders()
+	defer closes()
+
+	con, err := NewContainer(readers[:], 500)
 	if err != nil {
 		t.Error(err)
 	}
