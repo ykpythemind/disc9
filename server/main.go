@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 
@@ -17,12 +18,12 @@ func main() {
 	e.Use(middleware.Recover())
 
 	e.Static("/", "public")
-	e.POST("/upload", upload)
+	e.POST("/upload", uploadHandler)
 
 	e.Logger.Fatal(e.Start("localhost:1323"))
 }
 
-func upload(c echo.Context) error {
+func uploadHandler(c echo.Context) error {
 	form, err := c.MultipartForm()
 	if err != nil {
 		return err
@@ -30,7 +31,8 @@ func upload(c echo.Context) error {
 	files := form.File["files"]
 
 	if len(files) != 9 {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, "9 files are required")
+		s := fmt.Sprintf("9 files are required, but %d files given", len(files))
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, s)
 	}
 
 	var readers [9]io.Reader
